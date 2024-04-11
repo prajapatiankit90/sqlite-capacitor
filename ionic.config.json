@@ -1,0 +1,7 @@
+{
+  "name": "sqlite-databse",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react-vite"
+}
