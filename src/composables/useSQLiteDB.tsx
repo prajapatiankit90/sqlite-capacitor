@@ -62,9 +62,10 @@ const useSQLiteDB = () => {
   const initializeTables = async () => {
     performSQLAction(async (db: SQLiteDBConnection | undefined) => {
       const queryCreateTable = `
-      CREATE TABLE IF NOT EXISTS test (
+      CREATE TABLE IF NOT EXISTS voterList (
       id INTEGER PRIMARY KEY NOT NULL,
-      name TEXT NOT NULL
+      fname TEXT NOT NULL,
+      lname TEXT NOT NULL
       );
     `;
       const respCT = await db?.execute(queryCreateTable);
