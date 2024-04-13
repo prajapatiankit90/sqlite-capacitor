@@ -19,6 +19,7 @@ import { SQLiteDBConnection } from "@capacitor-community/sqlite";
 import useSQLiteDB from "../composables/useSQLiteDB";
 import useConfirmationAlert from "../composables/useConfirmationAlert";
 import './Tab1.css';
+import axios from "axios";
 
 type SQLItem = {
   id: number;
@@ -36,6 +37,8 @@ const Tab1: React.FC = () => {
   const [data, setData] = useState(defaultState)
   const [inputName, setInputName] = useState("");
   const [items, setItems] = useState<Array<SQLItem>>();
+  const [apiData, setApiData] = useState<any>([]);
+
 
   // hook for sqlite db
   const { performSQLAction, initialized } = useSQLiteDB();
@@ -45,7 +48,26 @@ const Tab1: React.FC = () => {
 
   useEffect(() => {
     loadData();
+
+    axios.get("https://retoolapi.dev/rA0KF7/data")
+      .then((res) => {
+        const resp = res.data
+        setApiData(resp)
+      })
+      .catch((err) => {
+        console.log(err.message)
+      })
+
   }, [initialized]);
+
+  const insertTable = () => {
+
+    items?.forEach(element => {
+      console.log(element)
+
+    })
+
+  }
 
   /**
    * do a select of the database
@@ -91,17 +113,33 @@ const Tab1: React.FC = () => {
 
   const addItem = async () => {
     console.log(data)
+    apiData?.forEach((element: any) => {
+      console.log(element)
+      try {
+        // add test record to db
+        performSQLAction(
+          async (db: SQLiteDBConnection | undefined) => {
+            await db?.query(`INSERT INTO voterList (id,fname,lname) values (?,?,?);`, [
+              element.id,
+              element.fname,
+              element.lname
+            ]);
 
+            // update ui
+          },
+          async () => {
+            // setInputName("");
+            setData({ ...defaultState })
+          }
+        );
+      } catch (error) {
+        alert((error as Error).message);
+      }
+    })
     try {
       // add test record to db
       performSQLAction(
         async (db: SQLiteDBConnection | undefined) => {
-          await db?.query(`INSERT INTO voterList (id,fname,lname) values (?,?,?);`, [
-            Date.now(),
-            data.fname,
-            data.lname
-          ]);
-
           // update ui
           const respSelect = await db?.query(`SELECT * FROM voterList;`);
           setItems(respSelect?.values);
@@ -240,23 +278,48 @@ const Tab1: React.FC = () => {
 
         <h3>THE SQLITE DATA</h3>
 
+        <IonButton onClick={insertTable}> API To INSERT </IonButton>
+
         {items?.map((item) => (
           <IonCard>
             <IonCardContent>
-            <IonGrid>
-              <IonRow key={item?.id}>
-                <IonCol size="6">
-                  <IonLabel className="ion-text-wrap">{item?.fname}</IonLabel>
-                </IonCol>
-                <IonCol size="6">
-                  <IonLabel className="ion-text-wrap">{item?.lname}</IonLabel>
-                </IonCol>
-                <IonCol>
-                  <IonButton onClick={() => doEditItem(item)}>EDIT</IonButton>
-                  <IonButton onClick={() => confirmDelete(item.id)}>DELETE</IonButton>
-                </IonCol>
-              </IonRow>
-            </IonGrid>
+              <IonGrid>
+                <IonRow key={item?.id}>
+                  <IonCol size="6">
+                    <IonLabel className="ion-text-wrap">{item?.fname}</IonLabel>
+                  </IonCol>
+                  <IonCol size="6">
+                    <IonLabel className="ion-text-wrap">{item?.lname}</IonLabel>
+                  </IonCol>
+                  <IonCol>
+                    <IonButton onClick={() => doEditItem(item)}>EDIT</IonButton>
+                    <IonButton onClick={() => confirmDelete(item.id)}>DELETE</IonButton>
+                  </IonCol>
+                </IonRow>
+              </IonGrid>
+            </IonCardContent>
+          </IonCard>
+        ))}
+
+
+        <h3>THE API DATA</h3>
+        {apiData?.map((item: any) => (
+          <IonCard>
+            <IonCardContent>
+              <IonGrid>
+                <IonRow key={item?.id}>
+                  <IonCol size="6">
+                    <IonLabel className="ion-text-wrap">{item?.fname}</IonLabel>
+                  </IonCol>
+                  <IonCol size="6">
+                    <IonLabel className="ion-text-wrap">{item?.lname}</IonLabel>
+                  </IonCol>
+                  <IonCol>
+                    <IonButton onClick={() => doEditItem(item)}>EDIT</IonButton>
+                    <IonButton onClick={() => confirmDelete(item.id)}>DELETE</IonButton>
+                  </IonCol>
+                </IonRow>
+              </IonGrid>
             </IonCardContent>
           </IonCard>
         ))}
